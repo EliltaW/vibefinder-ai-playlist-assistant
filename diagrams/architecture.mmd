@@ -1,0 +1,22 @@
+flowchart TD
+    A["Listener's music request"] --> B["Validate input"]
+    B -->|Valid| C["Gemini: extract preferences"]
+    B -->|Invalid| X["Show helpful message"]
+
+    C --> D["Validate genre, mood, and energy"]
+    D -->|Valid| E["Retrieve and rank songs"]
+    D -->|Invalid or unclear| X
+    F["Song catalog: songs.csv"] --> E
+
+    E -->|Matches found| G["Gemini: explain using retrieved songs"]
+    E -->|No suitable matches| X
+    G --> H["Verify recommended song IDs"]
+    H -->|Pass| I["Display songs and explanations"]
+    H -->|Fail or API error| J["Display rule-based explanations"]
+    E --> J
+    C -->|API error| X
+
+    T["Automated tests and evaluation cases"] -.-> D
+    T -.-> E
+    T -.-> H
+    I --> U["Human reviews recommendation quality"]
