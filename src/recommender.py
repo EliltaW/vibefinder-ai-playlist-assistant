@@ -1,6 +1,6 @@
 import csv
 from typing import List, Dict, Tuple, Optional
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 @dataclass
 class Song:
@@ -39,12 +39,30 @@ class Recommender:
         self.songs = songs
 
     def recommend(self, user: UserProfile, k: int = 5) -> List[Song]:
-        # TODO: Implement recommendation logic
-        return self.songs[:k]
+        user_prefs = {
+            "genre": user.favorite_genre,
+            "mood": user.favorite_mood,
+            "energy": user.target_energy,
+        }
+        song_dicts = [asdict(song) for song in self.songs]
+        songs_by_dict_id = {
+            id(song_dict): song
+            for song_dict, song in zip(song_dicts, self.songs)
+        }
+        recommendations = recommend_songs(user_prefs, song_dicts, k)
+        return [
+            songs_by_dict_id[id(song_dict)]
+            for song_dict, _, _ in recommendations
+        ]
 
     def explain_recommendation(self, user: UserProfile, song: Song) -> str:
-        # TODO: Implement explanation logic
-        return "Explanation placeholder"
+        user_prefs = {
+            "genre": user.favorite_genre,
+            "mood": user.favorite_mood,
+            "energy": user.target_energy,
+        }
+        _, reasons = score_song(user_prefs, asdict(song))
+        return "; ".join(reasons)
 
 def load_songs(csv_path: str) -> List[Dict]:
     """Returns song dictionaries loaded from a CSV file."""
@@ -63,19 +81,17 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     score = 0.0
     reasons = []
 
-    if song["genre"] == user_prefs["genre"]:
-        score += 2.0
-        reasons.append("genre match (+2.0)")
-    else:
-        reasons.append("genre mismatch (+0.0)")
+    genre_points = 1.0 if song["genre"] == user_prefs["genre"] else 0.0
+    score += genre_points
+    genre_result = "match" if genre_points else "mismatch"
+    reasons.append(f"genre {genre_result} (+{genre_points:.1f})")
 
-    if song["mood"] == user_prefs["mood"]:
-        score += 1.0
-        reasons.append("mood match (+1.0)")
-    else:
-        reasons.append("mood mismatch (+0.0)")
+    mood_points = 1.0 if song["mood"] == user_prefs["mood"] else 0.0
+    score += mood_points
+    mood_result = "match" if mood_points else "mismatch"
+    reasons.append(f"mood {mood_result} (+{mood_points:.1f})")
 
-    energy_points = 1.0 - abs(song["energy"] - user_prefs["energy"])
+    energy_points = 2.0 * (1.0 - abs(song["energy"] - user_prefs["energy"]))
     score += energy_points
     reasons.append(f"energy similarity (+{energy_points:.2f})")
 
