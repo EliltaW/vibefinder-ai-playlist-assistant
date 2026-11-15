@@ -107,3 +107,19 @@ def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tup
         scored_songs.append((song, score, explanation))
 
     return sorted(scored_songs, key=lambda result: result[1], reverse=True)[:k]
+
+def retrieve_songs(
+    user_prefs: Dict,
+    songs: List[Dict],
+    k: int = 5,
+) -> List[Tuple[Dict, float, str]]:
+    """Rank songs matching at least the requested genre or mood."""
+    candidates = [
+        song
+        for song in songs
+        if song["genre"] == user_prefs["genre"]
+        or song["mood"] == user_prefs["mood"]
+    ]
+
+    return recommend_songs(user_prefs, candidates, k)
+
