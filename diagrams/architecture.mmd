@@ -4,19 +4,22 @@ flowchart TD
     B -->|Invalid| X["Show helpful message"]
 
     C --> D["Validate genre, mood, and energy"]
+    C -->|Handled API or response error| X
     D -->|Valid| E["Retrieve and rank songs"]
-    D -->|Invalid or unclear| X
+    D -->|Invalid| X
     F["Song catalog: songs.csv"] --> E
 
-    E -->|Matches found| G["Gemini: explain using retrieved songs"]
-    E -->|No suitable matches| X
-    G --> H["Verify recommended song IDs"]
+    E -->|Matches found| G["Gemini: explain retrieved songs"]
+    E -->|No matches| X
+    G --> H["Check song IDs and nonempty text"]
+    G -->|Handled generation error| J["Use rule-based explanations"]
+    H -->|Fail| J
     H -->|Pass| I["Display songs and explanations"]
-    H -->|Fail or API error| J["Display rule-based explanations"]
-    E --> J
-    C -->|API error| X
+    J --> I
+    E -.->|Scoring reasons for fallback| J
 
-    T["Automated tests and evaluation cases"] -.-> D
+    T["Automated tests"] -.-> B
+    T -.-> D
     T -.-> E
-    T -.-> H
-    I --> U["Human reviews recommendation quality"]
+    T -.-> J
+    I --> U["Human reviews output quality"]
